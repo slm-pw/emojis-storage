@@ -4,7 +4,7 @@ const { readdir, readFileSync, readdirSync, watch } = require("fs");
 const md5 = require("md5");
 const EventEmitter = require('events');
 
-export default class EmojiStorage extends EventEmitter {
+module.exports = class EmojiStorage extends EventEmitter {
 
     constructor(client, options) {
         super();
