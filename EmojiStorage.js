@@ -13,7 +13,7 @@ module.exports = class EmojiStorage extends EventEmitter {
         this.cache = new Collection();
         this.md5Map = new Collection();
         this.options = options || { guildscount: 5, logs: false };
-        this.dir = options.dir || `${__dirname}/../cache/assets/emojis`;
+        this.dir = options.dir || `${__dirname}/../../cache/assets/emojis`;
         this.changed = false;
         this.md5RematchQuery = new Set();
         this.createQuery = new Set();
@@ -22,8 +22,9 @@ module.exports = class EmojiStorage extends EventEmitter {
 
         if(!fs.existsSync(this.dir)) {
             fs.mkdirSync(this.dir, { recursive: true })
-            // copy all files from testemojis to this.dir
-            this.testemojis()
+            setTimeout( () => {
+                this.testemojis()
+            }, 1000 )
         }
     }
 
@@ -31,17 +32,19 @@ module.exports = class EmojiStorage extends EventEmitter {
         let files = readdirSync(`${__dirname}/testemojis`)
         for(let i = 0; i < files.length; i++) {
             let file = files[i]
-            fs.copyFileSync(`${__dirname}/../testemojis/${file}`, `${this.dir}/${file}`)
+            fs.copyFileSync(`${__dirname}/testemojis/${file}`, `${this.dir}/${file}`)
         }
     }
 
     async checkGuilds() {
         let count = 0;
         let regexp = new RegExp(/^emojiStorage(\d|\d\d)$/)
-        let guilds = this.client.guilds.cache.filter(guild => guild?.name.match(regexp)).map(g => g)
+        let guilds = this.client.guilds.cache
+        .filter(guild => guild?.name?.match(regexp))
+        .map(g => g)
         for(let i = 0; i < guilds.length; i++) {
             let guild = guilds[i];
-            let invite = (await (guild.channels.cache.last()).fetchInvites()).first() ||
+            let invite = (await (guild.channels.cache.find(c => c.type === ChannelType.GuildText)).fetchInvites()).first() ||
             await (guild.channels.cache.find(c => c.type === ChannelType.GuildText)).createInvite({ maxAge: 0, maxUses: 0, unique: true, reason: 'EmojiStorage' })
             if(this.options.logs)
                 console.log(`STORAGE >>> Invite for ${guild.name}: ${invite.url}`)
@@ -182,7 +185,6 @@ module.exports = class EmojiStorage extends EventEmitter {
 
         readdir(this.dir, async (err, files) => {
             if(err) throw err
-            
             await this.checkEmojisInCache(files)
             await this.checkEmojisInServer(files)
         })
